@@ -1,0 +1,32 @@
+FROM registry.redhat.io/ubi10/openjdk-25:latest
+
+ENV KC_BOOTSTRAP_ADMIN_USERNAME=temp-admin
+ENV KC_BOOTSTRAP_ADMIN_PASSWORD=password
+
+USER root
+
+RUN microdnf -y install unzip \
+ && mkdir -p /opt/tools \
+ && chown 185 /opt/tools
+
+USER 185
+
+COPY rhbk-26.6.9.zip /opt/tools/
+
+RUN unzip -q /opt/tools/rhbk-26.6.9.zip -d /opt/tools \
+ && mv /opt/tools/rhbk-26.6.9/conf/keycloak.conf /opt/tools/rhbk-26.6.9/conf/keycloak.conf.orig \
+ && mv /opt/tools/rhbk-26.6.9/conf/cache-ispn.xml /opt/tools/rhbk-26.6.9/conf/cache-ispn.xml.orig
+
+COPY --chown=185 --chmod=0600 sso1.crt /opt/tools/rhbk-26.6.9/conf/
+COPY --chown=185 --chmod=0600 sso1.key /opt/tools/rhbk-26.6.9/conf/
+COPY --chown=185 --chmod=0600 sso2.crt /opt/tools/rhbk-26.6.9/conf/
+COPY --chown=185 --chmod=0600 sso2.key /opt/tools/rhbk-26.6.9/conf/
+
+COPY --chown=185 --chmod=0644 keycloak.conf /opt/tools/rhbk-26.6.9/conf/
+COPY --chown=185 --chmod=0644 cache-ispn.xml /opt/tools/rhbk-26.6.9/conf/
+
+COPY --chown=185 --chmod=0755 run.sh /opt/tools
+
+RUN /opt/tools/rhbk-26.6.9/bin/kc.sh build
+
+ENTRYPOINT [ "/opt/tools/run.sh" ]

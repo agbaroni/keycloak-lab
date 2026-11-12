@@ -1,0 +1,11 @@
+FROM registry.redhat.io/ubi10/ubi:latest
+
+VOLUME /data
+
+WORKDIR /data
+
+RUN dnf -y install openssl
+
+COPY run.sh /usr/local/bin/
+
+ENTRYPOINT [ "/bin/bash", "/usr/local/bin/run.sh" ]

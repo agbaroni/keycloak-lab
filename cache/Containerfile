@@ -1,0 +1,23 @@
+FROM registry.redhat.io/ubi10/openjdk-25:latest
+
+USER root
+
+RUN microdnf -y install unzip \
+ && mkdir -p /opt/tools \
+ && chown 185 /opt/tools
+
+USER 185
+
+COPY redhat-datagrid-8.6.3-server.zip /opt/tools/
+
+RUN unzip -q /opt/tools/redhat-datagrid-8.6.3-server.zip -d /opt/tools \
+ && mv /opt/tools/redhat-datagrid-8.6.3-server/server/conf/infinispan.xml /opt/tools/redhat-datagrid-8.6.3-server/server/conf/infinispan.xml.orig \
+ && /opt/tools/redhat-datagrid-8.6.3-server/bin/cli.sh user create admin -p password -g admin \
+ && /opt/tools/redhat-datagrid-8.6.3-server/bin/cli.sh user create sso -p password -g application
+
+COPY --chown=185 --chmod=0600 cache.p12 /opt/tools/redhat-datagrid-8.6.3-server/server/conf/
+COPY --chown=185 --chmod=0644 infinispan.xml /opt/tools/redhat-datagrid-8.6.3-server/server/conf/
+
+CMD [ "-b", "0.0.0.0" ]
+
+ENTRYPOINT [ "/opt/tools/redhat-datagrid-8.6.3-server/bin/server.sh" ]
